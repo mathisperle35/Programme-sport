@@ -116,7 +116,7 @@ const save=()=>localStorage.setItem("muscu_v1",JSON.stringify(S));
 let tab="train",view=null,draft=null;
 
 const $=s=>document.querySelector(s);
-const esc=s=>String(s).split("&").join("&").split("<").join("<").split(">").join(">").split('"').join(""");
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&","<":"<",">":">"}[c]));
 const today=()=>new Date().toISOString().slice(0,10);
 const maxRep=r=>{const m=String(r).match(/(\d+)\s*$/);return m?+m[1]:10};
 const minRep=r=>{const m=String(r).match(/^(\d+)/);return m?+m[1]:6};
