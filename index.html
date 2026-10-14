@@ -102,7 +102,7 @@ let tab="train",view=null,draft=null;
 
 /* ===== UTILITAIRES ===== */
 const $=s=>document.querySelector(s);
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&","<":"<",">":">",'"':"""}[c]));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":String.fromCharCode(38)+"amp;","<":String.fromCharCode(38)+"lt;",">":String.fromCharCode(38)+"gt;",'"':String.fromCharCode(38)+"quot;"}[c]));
 const today=()=>new Date().toISOString().slice(0,10);
 const maxRep=r=>{const m=String(r).match(/(\d+)\s*$/);return m?+m[1]:10};
 const minRep=r=>{const m=String(r).match(/^(\d+)/);return m?+m[1]:6};
