@@ -291,9 +291,17 @@ if (!Array.isArray(S.body)) S.body = [];
 const save = () => localStorage.setItem(STORE, JSON.stringify(S));
 let tab = "train", view = null, draft = null;
 const $ = s => document.querySelector(s);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({
-  "&":"&", "<":"<", ">":">", '"':"""
-}[c]));
+
+/* Protège le HTML sans guillemets imbriqués */
+function esc(value) {
+  return String(value)
+    .replaceAll('&', '&')
+    .replaceAll('<', '<')
+    .replaceAll('>', '>')
+    .replaceAll(String.fromCharCode(34), '"')
+    .replaceAll(String.fromCharCode(39), ''');
+}
+
 const today = () => {
   const d = new Date();
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,10);
@@ -362,7 +370,7 @@ function render() {
   else app.innerHTML = viewSet();
 
   if (tab === "body") drawBody();
-  if (tab === "prog" && view !== null) drawProg();
+  if (tab === "prog") drawProg();
 }
 
 function viewTrain() {
@@ -392,18 +400,20 @@ function viewDay() {
     const sg = suggestion(view,ex);
     const st = stagnation(d.name,ex.n);
     h += '<div class="card"><div class="exh"><b>'+esc(ex.n)+'</b><small>'+ex.s+' × '+esc(ex.r)+'</small></div>';
-    h += '<div class="meta"><span class="badge">Tempo '+esc(ex.tempo)+'</span><span class="badge">RPE '+ex.rpe+'</span><span class="badge">Repos '+esc(ex.rest)+'</span></div>';
+    h += '<div class="meta"><span class="badge">Tempo '+esc(ex.tempo)+'</span><span class="badge">RPE '+esc(ex.rpe)+'</span><span class="badge">Repos '+esc(ex.rest)+'</span></div>';
     h += exerciseImage(ex.n);
     h += '<div class="tip">💡 '+esc(ex.tip)+'</div>';
     h += '<div class="hint'+(sg.warn?' w':'')+'">'+esc(sg.msg)+'</div>';
     if (st) h += '<div class="hint w">⚠️ Stagnation sur 3 séances : pense à changer de variante ou à te reposer plus.</div>';
     h += '<div class="row" style="color:var(--mut);font-size:11px"><i>#</i><i>kg</i><i>reps</i><i></i></div>';
-    draft[ei].sets.forEach((s,si) => {
-      h += '<div class="row"><i>'+(si+1)+'</i>'+
-        '<input type="number" inputmode="decimal" step="0.5" value="'+s.w+'" onchange="upd('+ei+','+si+',\'w\',this.value)">'+
-        '<input type="number" inputmode="numeric" value="'+s.r+'" onchange="upd('+ei+','+si+',\'r\',this.value)">'+
-        '<button class="chk'+(s.ok?' on':'')+'" onclick="tog('+ei+','+si+')">✓</button></div>';
-    });
+    if (draft[ei]) {
+      draft[ei].sets.forEach((s,si) => {
+        h += '<div class="row"><i>'+(si+1)+'</i>'+
+          '<input type="number" inputmode="decimal" step="0.5" value="'+esc(s.w)+'" onchange="upd('+ei+','+si+',\'w\',this.value)">'+
+          '<input type="number" inputmode="numeric" value="'+esc(s.r)+'" onchange="upd('+ei+','+si+',\'r\',this.value)">'+
+          '<button class="chk'+(s.ok?' on':'')+'" onclick="tog('+ei+','+si+')">✓</button></div>';
+      });
+    }
     h += '</div>';
   });
   return h + '<button class="btn" onclick="finish()">Terminer la séance</button></div>';
@@ -441,8 +451,10 @@ function finish() {
 /* Progrès */
 let progDay = 0, progEx = 0;
 function viewProg() {
+  if (!S.days[progDay]) progDay = 0;
   const d = S.days[progDay];
-  let h = '<header><h1>Progrès</h1><div class="sub">Charge max par séance</div></header><div class="wrap"><div class="tabs-s">';
+  if (!d.ex[progEx]) progEx = 0;
+  let h = '<header><h1>Progrès</h1><div class="sub">Charge max par séance</div></header><div class="wrap"><div class="tabs-s" style="padding-left:0;padding-right:0">';
   S.days.forEach((x,i) => h += '<button class="'+(i===progDay?'on':'')+'" onclick="setProgDay('+i+')">'+esc(x.name)+'</button>');
   h += '</div><div class="card"><div class="tabs-s" style="padding:0 0 8px">';
   d.ex.forEach((e,i) => h += '<button class="'+(i===progEx?'on':'')+'" onclick="setProgEx('+i+')">'+esc(e.n)+'</button>');
@@ -516,7 +528,7 @@ function viewSet() {
     h += '<div class="card"><h3>'+esc(d.name)+'</h3><div class="edit small"><span>Exercice</span><span>Séries</span><span>Reps</span><span></span></div>';
     d.ex.forEach((e,ei) => {
       h += '<div class="edit"><input value="'+esc(e.n)+'" onchange="ed('+di+','+ei+',\'n\',this.value)">'+
-        '<input type="number" value="'+e.s+'" onchange="ed('+di+','+ei+',\'s\',this.value)">'+
+        '<input type="number" value="'+esc(e.s)+'" onchange="ed('+di+','+ei+',\'s\',this.value)">'+
         '<input value="'+esc(e.r)+'" onchange="ed('+di+','+ei+',\'r\',this.value)">'+
         '<button class="chk" onclick="delEx('+di+','+ei+')">✕</button></div>';
     });
